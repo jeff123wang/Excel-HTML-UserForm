@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Initial Title</title>
+    <script type="text/javascript">
+        function changeTitle() {
+            document.title = "getA1"; 
+        }
+
+        function helloWorld(inputValue) {
+            document.getElementById('outputDiv').innerText = inputValue;
+        }
+
+        function updateStatusText() {
+            document.title = "setA1";
+        }
+    </script>
+</head>
+<body>
+    <button onclick="changeTitle()">getA1</button>
+	<div style="background-color:red;" id="outputDiv"></div>
+    <br><br>
+    <button onclick="updateStatusText()">setA1</button>
+	<input type="text" id="inputField" placeholder="Enter text">    
+</body>
+</html>

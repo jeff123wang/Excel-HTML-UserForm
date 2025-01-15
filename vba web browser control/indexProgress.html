@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Bar</title>
+    <style>
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 25px;
+            padding: 3px;
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 30px;
+            background-color: #76c7c0;
+            border-radius: 25px;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+
+        .progress-bar.complete {
+            background-color: #4caf50;
+        }
+
+        .finished-message {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #4caf50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+    <div id="messageContainer"></div>
+
+    <script>
+        function updateProgressBar(progress) {
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+
+            if (progress >= 100) {
+                progressBar.classList.add('complete');
+                displayFinishedMessage();
+            }
+        }
+
+        function displayFinishedMessage() {
+            const messageContainer = document.getElementById('messageContainer');
+            const message = document.createElement('p');
+            message.className = 'finished-message';
+            message.textContent = 'Finished!';
+            messageContainer.appendChild(message);
+        }
+		
+    </script>
+</body>
+</html>
