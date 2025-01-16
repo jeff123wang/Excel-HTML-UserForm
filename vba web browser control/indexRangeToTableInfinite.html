@@ -10,8 +10,8 @@
       margin: 0;
       font-family: Arial, sans-serif;
     }
-    header {
-      width: 100%; 
+    #header {
+      width: 100%;
       background-color: #4caf50;
       color: white;
       padding: 10px 20px;
@@ -24,7 +24,8 @@
       border-radius: 4px;
       background-color: #f9f9f9;
       font-size: 16px;
-      overflow-x: auto; /* Ensure the content is scrollable if it overflows */
+      height: 200px; /* Set a fixed height */
+      overflow-y: auto; /* Ensure the content is scrollable if it overflows */
     }
     #controls {
       margin-top: 20px;
@@ -51,11 +52,16 @@
     }
   </style>
   <script>
+    var jsonData = [];
+    var rowsPerPage = 10;
+    var currentPage = 0;
+
     // Function to create a table from JSON data
     function createTableFromJson(jsonData) {
       var table = document.createElement('table');
       var thead = document.createElement('thead');
       var tbody = document.createElement('tbody');
+      tbody.id = 'tableBody';
 
       // Create table headers
       var headers = Object.keys(jsonData[0]);
@@ -67,10 +73,25 @@
       });
       thead.appendChild(tr);
 
-      // Create table rows
-      jsonData.forEach(function(row) {
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      return table;
+    }
+
+    // Function to load more rows
+    function loadMoreRows() {
+      var tbody = document.getElementById('tableBody');
+      if (!tbody) {
+        console.error('Table body not found');
+        return;
+      }
+      var start = currentPage * rowsPerPage;
+      var end = start + rowsPerPage;
+      var rows = jsonData.slice(start, end);
+
+      rows.forEach(function(row) {
         var tr = document.createElement('tr');
-        headers.forEach(function(header) {
+        Object.keys(row).forEach(function(header) {
           var td = document.createElement('td');
           td.textContent = row[header];
           tr.appendChild(td);
@@ -78,21 +99,30 @@
         tbody.appendChild(tr);
       });
 
-      table.appendChild(thead);
-      table.appendChild(tbody);
-      return table;
+      currentPage++;
     }
 
     // Ensure the observer is set up after the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
+	  // prevent right click
+	  document.addEventListener('contextmenu', function(event){event.preventDefault()});
+	  
       var target = document.querySelector('title');
       if (target) {
         var observer = new MutationObserver(function(mutations) {
-          var jsonData = JSON.parse(document.title);
-          var table = createTableFromJson(jsonData);
+		  currentPage = 0;
           var urlDisplay = document.getElementById('urlDisplay');
           urlDisplay.innerHTML = ''; // Clear previous content
+		  jsonData = JSON.parse(document.title);
+          var table = createTableFromJson(jsonData);
           urlDisplay.appendChild(table);
+		  loadMoreRows();
+          // Add scroll event listener to load more rows
+          urlDisplay.addEventListener('scroll', function() {
+            if (urlDisplay.scrollTop + urlDisplay.clientHeight >= urlDisplay.scrollHeight) {
+              loadMoreRows();
+            }
+          });
         });
         var config = { subtree: true, characterData: true, childList: true };
         observer.observe(target, config);
@@ -102,10 +132,8 @@
     });
   </script>
 </head>
-<body>
-  <header>
-    <h1>Title Change Listener</h1>
-  </header> 
+<body> 
+	<div id='header'>Title Change Listener</div> 
   <div id="urlDisplay">Current Title: </div> 
 </body>
 </html> 
