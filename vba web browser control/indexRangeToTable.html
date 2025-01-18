@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Free Web tutorials">
   <title>URL Change Listener</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
     }
+
     header {
-      width: 100%; 
+      width: 100%;
       background-color: #4caf50;
       color: white;
       padding: 10px 20px;
       box-sizing: border-box;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
     #urlDisplay {
       margin-top: 20px;
       padding: 10px;
@@ -24,33 +31,95 @@
       border-radius: 4px;
       background-color: #f9f9f9;
       font-size: 16px;
-      overflow-x: auto; /* Ensure the content is scrollable if it overflows */
+      overflow-x: auto;
     }
+
     #controls {
       margin-top: 20px;
     }
-    #controls input, #controls button {
+
+    #controls input,
+    #controls button {
       padding: 10px;
       font-size: 16px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      table-layout: fixed; /* Ensure the table cells adjust their width */
+      table-layout: fixed;
     }
-    table, th, td {
+
+    table,
+    th,
+    td {
       border: 1px solid #ccc;
     }
-    th, td {
+
+    th,
+    td {
       padding: 10px;
       text-align: left;
-      word-wrap: break-word; /* Ensure long words break to fit within the cell */
+      word-wrap: break-word;
     }
+
     tr:hover {
-      background-color: #f1f1f1; /* Highlight row on hover */
+      background-color: #f1f1f1;
+    }
+
+    #loadDataButton {
+      background-color: #81c784;
+      color: #fff;
+      border: 2px solid #4caf50;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #loadDataButton:hover {
+      background-color: #4caf50;
+      color: #fff;
+    }
+
+    #calendarPopup {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      /* Add some spacing below the header */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #calendarInput {
+      margin-bottom: 10px;
+    }
+
+    #submitDate {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    #submitDate:hover {
+      background-color: #45a049;
+    }
+
+    .highlight {
+      background-color: yellow;
+      /* Highlight color */
     }
   </style>
   <script>
+    // Polyfill for matches method
+    if (!Element.prototype.matches) {
+      Element.prototype.matches =
+        Element.prototype.msMatchesSelector ||
+        Element.prototype.webkitMatchesSelector;
+    }
     // Function to create a table from JSON data
     function createTableFromJson(jsonData) {
       var table = document.createElement('table');
@@ -60,7 +129,7 @@
       // Create table headers
       var headers = Object.keys(jsonData[0]);
       var tr = document.createElement('tr');
-      headers.forEach(function(header) {
+      headers.forEach(function (header) {
         var th = document.createElement('th');
         th.textContent = header;
         tr.appendChild(th);
@@ -68,11 +137,12 @@
       thead.appendChild(tr);
 
       // Create table rows
-      jsonData.forEach(function(row) {
+      jsonData.forEach(function (row, rowIndex) {
         var tr = document.createElement('tr');
-        headers.forEach(function(header) {
+        headers.forEach(function (header, cellIndex) {
           var td = document.createElement('td');
           td.textContent = row[header];
+          td.id = 'cell-' + rowIndex + '-' + cellIndex; // Add unique ID to each cell
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
@@ -83,29 +153,131 @@
       return table;
     }
 
-    // Ensure the observer is set up after the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      var target = document.querySelector('title');
-      if (target) {
-        var observer = new MutationObserver(function(mutations) {
-          var jsonData = JSON.parse(document.title);
-          var table = createTableFromJson(jsonData);
-          var urlDisplay = document.getElementById('urlDisplay');
-          urlDisplay.innerHTML = ''; // Clear previous content
-          urlDisplay.appendChild(table);
+    function displayTable(jsonData) {
+      var table = createTableFromJson(jsonData);
+      var urlDisplay = document.getElementById('urlDisplay');
+      urlDisplay.innerHTML = ''; // Clear previous content
+      urlDisplay.appendChild(table);
+
+      // Add click event to table cells AFTER the table is added to the DOM
+      table.addEventListener('click', function (event) {
+
+        var cell = event.target;
+
+        // only work with TD elements
+        if (cell.tagName === 'TD') {
+          var calendarPopup = document.getElementById('calendarPopup');
+
+          // Set the current data in the calendar
+          var currentData = cell.textContent.trim();
+          document.getElementById('calendarInput').value = currentData;
+
+          // Store the clicked cell for later use
+          calendarPopup.dataset.cell = cell.id;
+
+          // highlight the clicked cell 
+
+          // Get the currently highlighted cell
+          const highlightedCell = table.querySelector('.highlight');
+
+          // Remove highlight from the previously highlighted cell
+          if (highlightedCell) {
+            highlightedCell.classList.remove('highlight');
+          }
+
+          // Add highlight to the clicked cell
+          cell.classList.add('highlight');
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var loadDataButton = document.getElementById('loadDataButton');
+
+      loadDataButton.addEventListener('click', function () {
+        var target = document.querySelector('meta[name="description"]');
+        if (target) {
+          var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              if (mutation.type === 'attributes' && mutation.attributeName === 'content') {
+                const desc = mutation.target.content;
+                const data = JSON.parse(desc);
+                displayTable(data);
+                observer.disconnect(); // Disconnect the observer after updating the table
+              }
+            });
+          });
+          var config = { attributes: true, attributeFilter: ['content'] };
+          observer.observe(target, config);
+
+          // Change the title to "loaddata"
+          document.title = 'loaddata';
+        } else {
+          document.getElementById('urlDisplay').textContent = 'Description meta tag not found';
+        }
+      });
+
+      // Handle date submission
+      var submitButton = document.getElementById('submitDate');
+      if (submitButton) {
+        submitButton.addEventListener('click', function () {
+          var calendarPopup = document.getElementById('calendarPopup');
+          var calendarInput = document.getElementById('calendarInput');
+          var cell = document.getElementById(calendarPopup.dataset.cell);
+
+          if (cell && calendarInput.value) {
+            // Update the cell content with the selected date
+            cell.textContent = calendarInput.value;
+
+            // Prepare the updated row data
+            var row = closest(cell, 'tr');
+            var rowData = {};
+            var th = closest(row, 'table').querySelectorAll('th');
+            var thArray = Array.prototype.slice.call(th);
+            var headers = thArray.map(function (th) {
+              return th.textContent;
+            });
+
+            Array.prototype.slice.call(row.cells).forEach(function (cell, index) {
+              rowData[headers[index]] = cell.textContent;
+            });
+
+            // Update the description meta tag with the row data
+            var metaTag = document.querySelector('meta[name="description"]');
+
+            if (metaTag) {
+              metaTag.setAttribute('content', JSON.stringify(rowData));
+            }
+
+            // Change the title to notify the backend
+            document.title = "updateDate";
+          }
         });
-        var config = { subtree: true, characterData: true, childList: true };
-        observer.observe(target, config);
-      } else {
-        document.getElementById('urlDisplay').textContent('Title element not found');
       }
     });
+
+    function closest(element, selector) {
+      while (element && element !== document) {
+        if (element.matches(selector)) {
+          return element;
+        }
+        element = element.parentElement;
+      }
+      return null;
+    }
   </script>
 </head>
+
 <body>
   <header>
     <h1>Title Change Listener</h1>
-  </header> 
-  <div id="urlDisplay">Current Title: </div> 
+    <button id="loadDataButton">Load Data</button>
+  </header>
+  <div id="calendarPopup">
+    <input placeholder="YYYY-MM-DD" type="text" id="calendarInput">
+    <button id="submitDate">Submit</button>
+  </div>
+  <div id="urlDisplay">Current Title: </div>
 </body>
-</html> 
+
+</html>
